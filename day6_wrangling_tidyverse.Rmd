@@ -77,3 +77,157 @@ ggplot(data = wb_subset, aes(x= year, y = co2_emissions_kt, group = country)) +
     -   making each unique input for series name its own column!
 
 -   rename columns in new data set! (names is not a pipeable function, so have to keep it outside)
+
+## Afternoon session
+
+-   subsetting rows based on you conditions
+
+    -   dpylr::filter(df=...)
+
+        -   i want to keep or exclude rows based on whether or not they satisfy conditions I specify
+
+### Example 1:
+
+#### Filter to only keep exact matches/ single conditions
+
+EXAMPLE 1: We want to keep heights greater than 180.
+
+```{r}
+ex_1 <- starwars |> 
+  filter(height > 180)
+```
+
+EXAMPLE 2: We want to only keep observations where the eye color is blue.
+
+```{r}
+ex_2 <- starwars |> 
+  filter(eye_color == "blue")
+```
+
+EXAMPLE 3: We want to make a subset where the home world is Naboo
+
+```{r}
+ex_3 <- starwars |> 
+  filter(homeworld == "Naboo")
+```
+
+#### Filter to satisfy multiple conditions
+
+EXAMPLE 4: Create a subset from starwars where the height is greater than 180 and the home world is Tatooine
+
+```{r}
+ex_4 <- starwars |> 
+  filter(height > 180 &
+           homeworld == "Tatooine")
+```
+
+EXAMPLE 5: Create a subset where the hair color is brown and species is human
+
+```{r}
+ex_5 <- starwars |> 
+  filter(hair_color == "brown" &
+           species == "Human")
+```
+
+#### Filtering 'or' statements
+
+EXAMPLE 6: Create a subset where height \> 180 or eye color is yellow
+
+```{r}
+ex_6 <- starwars |> 
+  filter(height > 180 |
+           eye_color == "yellow")
+```
+
+EXAMPLE 7: Create a subset that keeps rows if home world is Endor or species is a droid
+
+```{r}
+ex_7 <- starwars |> 
+  filter(homeworld == "Endor" |
+           species == "Droid")
+```
+
+EXAMPLE 8/9: Create a subset where eye color is blue or brown or red
+
+```{r}
+ex_8 <- starwars |> 
+  filter(eye_color == "blue" | eye_color == "brown" |
+           eye_color == "red")
+#can get long
+
+
+
+ex_9 <- starwars |> 
+  filter(eye_color %in% c("blue", "brown", "red"))
+#this goes from row to row and sees if the input is any of the colors
+## versus filter(eye_color == c("blue", "brown", "red")) will look at row 1 and look for blue, then row 2 look for brown, in that order, where what we coded will look at each row and see if blue, brown or red fits the value inside. 
+```
+
+EXAMPLE 11: Create a subset where the home world is Endor or Tatooine or Naboo AND height \<150
+
+```{r}
+ex_11 <- starwars |> 
+  filter(homeworld %in% c("Endor", "Tatooine", "Naboo"),
+         height < 150)
+```
+
+EXAMPLE 12/13: We want to create a subset with all species besides human
+
+```{r}
+ex_12 <- starwars |> 
+  filter(species != "Human")
+
+ex_13 <- starwars |> 
+  filter(!species %in% c("Human", "Ewok",
+                          "Wookie"))
+```
+
+#### `Select()` or exclude columns
+
+How to select or exclude columns in a few ways:
+
+-   Select by name
+
+    EXAMPLE 14/15 create a subset that only looks at certain columns
+
+```{r}
+ex_14 <- wb_clean |> 
+  select(country, year, co2_emissions_kt)
+
+ex_15 <- wb_clean |> 
+  select(year:fossil_fuel_cons_pct)
+```
+
+EXAMPLE 16: we want to exclude the column "access_electricity_pp"
+
+```{r}
+ex_16 <- wb_clean |> 
+  select(year:fossil_fuel_cons_pct & -access_to_electricity_pp)
+```
+
+EXAMPLE 17: Multiple pipe steps together
+
+```{r}
+ex_17 <- wb_clean |> 
+  filter(country %in% c("Bolivia", "Chile", "Mexico")) |> 
+  select(country:fossil_fuel_cons_pct)
+```
+
+EXAMPLE 18: Another way to use select is to rename or move things around
+
+```{r}
+ex_18 <- wb_clean |> 
+  select(year_new = year,
+         emissions = co2_emissions_kt,
+         country_name = country)
+
+#kept the 3 columns in reference, renamed them
+```
+
+EXAMPLE 19: Select only columns for country, year and water stress from wb_clean data and reorder them as year, country, water stress. Then filter to only include observations for any 3 countries of your choosing.
+
+```{r}
+ex_19 <- wb_clean |> 
+  select(year, country, water_stress) |> 
+  filter(country %in% c("Australia", "Aruba", "Lebanon"))
+```

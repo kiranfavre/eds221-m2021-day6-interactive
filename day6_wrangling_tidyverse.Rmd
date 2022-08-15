@@ -1,0 +1,79 @@
+---
+title: "Data wrangling in tidyr"
+author: "Kiran Favre"
+date: "2022-08-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+library(tidyverse)
+library(here)
+library(janitor)
+```
+
+## Data wrangling
+
+#### Read in World Bank data files
+
+```{r}
+wb_indicators <- read_csv(here("data", "wb_indicators.csv"), na = c("..", ""))
+# notice how empty values are populated by '..' and by empty cells! so we use na
+
+wb_metadata <- read_csv(here("data", "wb_indicators_metadata.csv"))
+```
+
+#### How can we make this data more tidy?
+
+##### Put all years in one column and seriesnames in one row
+
+-   can use pivotlonger to get years into a single column
+
+    -   start with data, then use function and think of which columns you want to gather together.
+
+```{r}
+wb_indicators_long <- wb_indicators |> 
+  pivot_longer(cols = '2001 [YR2001]': '2020 [YR2020]',
+               names_to = "year",
+               values_to = "indicator_value")
+```
+
+#### Separate to clean up year column
+
+```{r}
+wb_clean <- wb_indicators_long |> 
+  separate(col = year, into = c("year", "year_chr"),
+           sep = " ") |> 
+  select(-year_chr, -'Country Code', -'Series Code') |> 
+  mutate(year = as.numeric(year)) |> 
+  drop_na('Series Name') |> 
+  pivot_wider(names_from = 'Series Name', values_from=indicator_value)
+
+names(wb_clean) <- c("country", "year", "access_clean_fuels_pp", "access_to_electricity_pp", "co2_emissions_kt", "fossil_fuel_cons_pct", "water_stress")
+
+
+# now we want to plot co2 emission by country
+
+# to search by row, we use filter
+##look for a vector in the data
+wb_subset <- wb_clean |> 
+  filter(country %in% c("Algeria", "Barbados", "Bulgaria", "Chile"))
+
+ggplot(data = wb_subset, aes(x= year, y = co2_emissions_kt, group = country)) +
+  geom_line(aes(color = country)) 
+  # + facet_wrap(~country) if you wanted to look at this in their own plots!
+```
+
+-   separate the title "year [yearxxx]
+
+-   select is used for selecting rows vs filter is to select rows!
+
+-   mutate is used to give a new column name to years that are numeric (rather than characters)
+
+-   drop_na does complete row deletion on rows with NA in the column of interest
+
+-   widen the variables currently trapped in 'Series Name' to be spread across multiple columns and get values that populate those columns from 'Indicator Value'
+
+    -   making each unique input for series name its own column!
+
+-   rename columns in new data set! (names is not a pipeable function, so have to keep it outside)

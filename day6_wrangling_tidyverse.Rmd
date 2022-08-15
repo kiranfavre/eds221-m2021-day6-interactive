@@ -86,9 +86,7 @@ ggplot(data = wb_subset, aes(x= year, y = co2_emissions_kt, group = country)) +
 
         -   i want to keep or exclude rows based on whether or not they satisfy conditions I specify
 
-### Example 1:
-
-#### Filter to only keep exact matches/ single conditions
+### Filter to only keep exact matches/ single conditions
 
 EXAMPLE 1: We want to keep heights greater than 180.
 
@@ -111,7 +109,7 @@ ex_3 <- starwars |>
   filter(homeworld == "Naboo")
 ```
 
-#### Filter to satisfy multiple conditions
+### Filter to satisfy multiple conditions
 
 EXAMPLE 4: Create a subset from starwars where the height is greater than 180 and the home world is Tatooine
 
@@ -129,7 +127,7 @@ ex_5 <- starwars |>
            species == "Human")
 ```
 
-#### Filtering 'or' statements
+### Filtering 'or' statements
 
 EXAMPLE 6: Create a subset where height \> 180 or eye color is yellow
 
@@ -182,7 +180,7 @@ ex_13 <- starwars |>
                           "Wookie"))
 ```
 
-#### `Select()` or exclude columns
+### `Select()` or exclude columns
 
 How to select or exclude columns in a few ways:
 
@@ -230,4 +228,120 @@ EXAMPLE 19: Select only columns for country, year and water stress from wb_clean
 ex_19 <- wb_clean |> 
   select(year, country, water_stress) |> 
   filter(country %in% c("Australia", "Aruba", "Lebanon"))
+```
+
+### Rename columns using dplyr
+
+EXAMPLE 20/21: We want to rename only 2 columns from a data set
+
+```{r}
+##rename(new name = old name)
+
+ex_20 <- wb_clean |> 
+  rename(ffcp = fossil_fuel_cons_pct,
+         ws = water_stress)
+
+#choose 2 to rename yourself
+ex_21 <- wb_clean |> 
+  rename(thems_w_electricity = access_to_electricity_pp,
+         thems_w_fuels = access_clean_fuels_pp)
+```
+
+### `Mutate()` :update an existing column or add a new one
+
+If you assign a new column name, it will add a new column to the end of your data frame. If you assign an existing column name, it will overwrite that column.
+
+EXAMPLE 22: Add a new column to wb_clean that is co2_emissions_tons
+
+```{r}
+ex_22 <- wb_clean |> 
+  mutate(co2_emissions_t = co2_emissions_kt * 1000) |> 
+  relocate(co2_emissions_t, .after = co2_emissions_kt)
+
+ex_23 <- wb_clean |> 
+  mutate(yay = "YAY")
+
+#change the class of year from numeric to characteristic
+ex_24 <- wb_clean |> 
+  mutate(year = as.character(year))
+
+#convert back!
+ex_25 <- ex_24 |> 
+  mutate(year = as.numeric(year))
+
+
+#dplyr::relocate()
+ex_26 <- wb_clean |> 
+  relocate(water_stress, .after = year)
+
+
+```
+
+### `group_by |> summarize` : creates groups under the hood based on variables you specify
+
+#### Summarize applies your function to EACH GROUP and returns them in a nice summary table
+
+EXAMPLE 27: group Star Wars characters by species
+
+```{r}
+ex_27 <- starwars |> 
+  filter(homeworld %in% c("Naboo", "Tatooine")) |> 
+  group_by(species, homeworld) |> 
+  summarize(mean_height = mean(height, na.rm = TRUE),
+            mean_mass = mean(mass, na.rm = TRUE))
+```
+
+EXAMPLE 28:
+
+```{r}
+df <- tribble(
+  ~species, ~length, ~number,
+  "lobster", 12, 4,
+  "lobster", 14, 6,
+  "lobster", 15, 2)
+#this data is not tidy bc of multiple observations in one row
+#lobster, that bend at 12 in, there are 4 of them. 
+
+df_case <- df |> 
+  uncount(number)
+
+```
+
+EXAMPLE 29: count
+
+```{r}
+# can use count function to create frequency tables
+# count counts observations
+# combination of group_by summarize n()
+
+ex_29 <- starwars |> 
+  count(homeworld, species)
+
+
+#this will do the same thing, but we can do as many calculations as we want in this method
+ex_30 <- starwars |> 
+  group_by(homeworld, species) |> 
+  summarize(size = n(), mean_height = mean(height, na.rm = TRUE))
+```
+
+Practice example:
+
+-   start from wb_clean
+
+-   only keep observations from Nicaragua, Ecuador, Peru and Chile AND for years greater than 2005
+
+-   only keep columns for country, year and co2 emissions
+
+-   add a new column that is co2 emissions converted to megatons
+
+-   find the total co2 emissions in megatons still in the data set by country
+
+```{r}
+practice_ex <- wb_clean |> 
+  filter(country %in% c("Nicaragua", "Ecuador", "Peru", "Chile") & year > 2005) |>
+    select(country, year, co2_emissions_kt) |> 
+  mutate(co2_emissions_mt = co2_emissions_kt / 1000) |>
+  group_by(country) |> ##next step will be grouped by country
+  summarize(total_co2_mt = sum(co2_emissions_mt, na.rm = TRUE))
+  
 ```
